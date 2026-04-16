@@ -10,8 +10,8 @@ services:
     volumes:
       - ./config.yaml:/app/config.yaml:ro
     environment:
-      - BROKER_USERNAME=${BROKER_USERNAME}
-      - BROKER_PASSWORD_HASH=${BROKER_PASSWORD_HASH}
+      - BROKER_USERNAME
+      - BROKER_PASSWORD_HASH
       - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
     labels:
       - "com.docker.compose.project=meshtastic"
