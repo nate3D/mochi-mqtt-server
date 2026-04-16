@@ -40,16 +40,22 @@ func ParseTopic(topic string) (ParsedTopic, string) {
 		return ParsedTopic{}, "topic root/region is empty"
 	}
 
-	// Everything after "/2/" is: TYPE/CHANNEL/NODEID
+	// Everything after "/2/" is: TYPE[/CHANNEL/NODEID]
 	after := rest[vIdx+len(versionMarker):]
 	parts := strings.SplitN(after, "/", 3)
-	if len(parts) < 3 {
-		return ParsedTopic{}, "topic does not have enough segments after /2/"
-	}
 
 	ptype := parts[0]
 	if ptype != "e" && ptype != "c" && ptype != "json" && ptype != "map" {
 		return ParsedTopic{}, "unknown topic type, expected e, c, json, or map"
+	}
+
+	// map topics use msh/ROOT/2/map/ — no channel or node ID segment.
+	if ptype == "map" {
+		return ParsedTopic{Root: root, Type: ptype}, ""
+	}
+
+	if len(parts) < 3 {
+		return ParsedTopic{}, "topic does not have enough segments after /2/"
 	}
 
 	channel := parts[1]
@@ -57,10 +63,8 @@ func ParseTopic(topic string) (ParsedTopic, string) {
 		return ParsedTopic{}, "topic channel name is empty"
 	}
 
-	// map topics may omit the node ID segment (trailing slash with empty value).
-	// All other types require a node ID beginning with "!".
 	nodeID := parts[2]
-	if ptype != "map" && !strings.HasPrefix(nodeID, "!") {
+	if !strings.HasPrefix(nodeID, "!") {
 		return ParsedTopic{}, "topic node ID must begin with !"
 	}
 
