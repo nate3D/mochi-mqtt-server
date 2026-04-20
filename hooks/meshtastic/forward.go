@@ -22,10 +22,11 @@ const (
 // publishes validated Meshtastic packets to it using the same topic path they
 // arrived on. Auto-reconnect is handled by the paho client.
 type Forwarder struct {
-	cfg      UpstreamForwardConfig
-	client   paho.Client
-	channels map[string]struct{} // empty = forward all channels
-	log      *slog.Logger
+	cfg             UpstreamForwardConfig
+	client          paho.Client
+	channels        map[string]struct{} // empty = forward all channels
+	blockedChannels map[string]struct{} // channels never forwarded upstream
+	log             *slog.Logger
 }
 
 // newForwarder creates a Forwarder and initiates the upstream connection.
@@ -33,12 +34,16 @@ type Forwarder struct {
 // background — callers should not treat this as a fatal error.
 func newForwarder(cfg UpstreamForwardConfig, log *slog.Logger) *Forwarder {
 	f := &Forwarder{
-		cfg:      cfg,
-		log:      log,
-		channels: make(map[string]struct{}, len(cfg.Channels)),
+		cfg:             cfg,
+		log:             log,
+		channels:        make(map[string]struct{}, len(cfg.Channels)),
+		blockedChannels: make(map[string]struct{}, len(cfg.BlockedChannels)),
 	}
 	for _, ch := range cfg.Channels {
 		f.channels[ch] = struct{}{}
+	}
+	for _, ch := range cfg.BlockedChannels {
+		f.blockedChannels[ch] = struct{}{}
 	}
 
 	broker := cfg.BrokerAddr
@@ -99,15 +104,24 @@ func newForwarder(cfg UpstreamForwardConfig, log *slog.Logger) *Forwarder {
 }
 
 // Forward publishes payload to topic on the upstream broker.
-// If a channel allowlist is configured, the packet is only forwarded when
-// channel is in the list. Errors are logged and do not propagate — the local
-// broker pipeline is never blocked by upstream availability.
+// If a channel denylist is configured, the packet is suppressed when the
+// channel is in it. If an allowlist is configured, the packet is only
+// forwarded when the channel is in that list. Errors are logged and do not
+// propagate — the local broker pipeline is never blocked by upstream
+// availability.
 func (f *Forwarder) Forward(topic, channel string, payload []byte) {
 	// channel is empty for map-type topics, which carry no channel segment.
-	// Always forward those regardless of the channel allowlist.
-	if len(f.channels) > 0 && channel != "" {
-		if _, ok := f.channels[channel]; !ok {
+	// Always forward those regardless of channel filters.
+	if channel != "" {
+		// Denylist takes precedence over allowlist.
+		if _, blocked := f.blockedChannels[channel]; blocked {
+			f.log.Debug("upstream forwarder: channel blocked, not forwarding", "topic", topic, "channel", channel)
 			return
+		}
+		if len(f.channels) > 0 {
+			if _, ok := f.channels[channel]; !ok {
+				return
+			}
 		}
 	}
 

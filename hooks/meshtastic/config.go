@@ -53,6 +53,12 @@ type UpstreamForwardConfig struct {
 	// Channels is an optional allowlist of channel names to forward.
 	// When empty, all channels that pass the local filters are forwarded.
 	Channels []string `yaml:"channels" json:"channels"`
+	// BlockedChannels is a denylist of channel names that will never be forwarded
+	// to the upstream broker. Takes precedence over the Channels allowlist.
+	// Packets on blocked channels are still processed locally (dedup, rate limit,
+	// portnum filtering, subscribers on this broker) — they are only suppressed
+	// from upstream forwarding.
+	BlockedChannels []string `yaml:"blocked_channels" json:"blocked_channels"`
 }
 
 // Config is the configuration for the MeshtasticHook.

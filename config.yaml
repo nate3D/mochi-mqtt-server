@@ -76,3 +76,8 @@ meshtastic:
     client_id: "memphismesh-broker"
     # Optional allowlist of channel names to forward. Empty = forward all passing channels.
     # channels: []
+    # Channels that will NEVER be forwarded upstream, regardless of the allowlist above.
+    # Use this to keep private channels local to this broker.
+    # blocked_channels:
+    #   - MyPrivateChannel
+    #   - LocalOnly

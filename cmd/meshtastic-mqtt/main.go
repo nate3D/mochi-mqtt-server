@@ -132,13 +132,14 @@ type meshtasticConfig struct {
 // upstreamForwardConfig is the YAML representation of meshhook.UpstreamForwardConfig.
 // The password can alternatively be supplied via UPSTREAM_MQTT_PASSWORD env var.
 type upstreamForwardConfig struct {
-	Enabled    bool     `yaml:"enabled"`
-	BrokerAddr string   `yaml:"broker_addr"`
-	Username   string   `yaml:"username"`
-	Password   string   `yaml:"password"`
-	TLS        bool     `yaml:"tls"`
-	ClientID   string   `yaml:"client_id"`
-	Channels   []string `yaml:"channels"`
+	Enabled         bool     `yaml:"enabled"`
+	BrokerAddr      string   `yaml:"broker_addr"`
+	Username        string   `yaml:"username"`
+	Password        string   `yaml:"password"`
+	TLS             bool     `yaml:"tls"`
+	ClientID        string   `yaml:"client_id"`
+	Channels        []string `yaml:"channels"`
+	BlockedChannels []string `yaml:"blocked_channels"`
 }
 
 // credentialConfig is a username + bcrypt password hash from the config file.
@@ -197,13 +198,14 @@ func main() {
 		AllowJSON:          cfg.Meshtastic.AllowJSON,
 		AllowedRegions:     cfg.Meshtastic.AllowedRegions,
 		UpstreamForward: meshhook.UpstreamForwardConfig{
-			Enabled:    cfg.Meshtastic.UpstreamForward.Enabled,
-			BrokerAddr: cfg.Meshtastic.UpstreamForward.BrokerAddr,
-			Username:   cfg.Meshtastic.UpstreamForward.Username,
-			Password:   cfg.Meshtastic.UpstreamForward.Password,
-			TLS:        cfg.Meshtastic.UpstreamForward.TLS,
-			ClientID:   cfg.Meshtastic.UpstreamForward.ClientID,
-			Channels:   cfg.Meshtastic.UpstreamForward.Channels,
+			Enabled:         cfg.Meshtastic.UpstreamForward.Enabled,
+			BrokerAddr:      cfg.Meshtastic.UpstreamForward.BrokerAddr,
+			Username:        cfg.Meshtastic.UpstreamForward.Username,
+			Password:        cfg.Meshtastic.UpstreamForward.Password,
+			TLS:             cfg.Meshtastic.UpstreamForward.TLS,
+			ClientID:        cfg.Meshtastic.UpstreamForward.ClientID,
+			Channels:        cfg.Meshtastic.UpstreamForward.Channels,
+			BlockedChannels: cfg.Meshtastic.UpstreamForward.BlockedChannels,
 		},
 	}
 
